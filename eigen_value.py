@@ -14,25 +14,29 @@ def solve_eigen(k0, h, nf, ns, nc, mode='wavenumber'):
         k0 = 2*np.pi/k0
 
     denomenator = np.power(nf, 2)-np.power(ns,2)
-    V = k0 * h * np.sqrt(denomenator)
-    a = (np.power(ns,2)-np.power(nc,2))/denomenator
 
-    n_allowed_modes = np.floor((V-np.arctan(a))/np.pi)
+    V = k0*h*np.sqrt(denomenator)
+    a = (np.power(ns,2)-np.power(nc,2))/denomenator
+    print(V, a)
+
+
+    n_allowed_modes = int(np.ceil((V-np.arctan(np.sqrt(a)))/np.pi))
+    b = np.zeros(n_allowed_modes)
     for i in range(n_allowed_modes):
-        b = root_scalar(normalized_relation, args=(V, a, i)).root
+        b[i] = root_scalar(normalized_relation, bracket=[0,1-1e-6], args=(V, a, i)).root
     return b
 
-def mode_structure(nf, ns, nc, n_modes =5, mode='wavenumber'):
+def mode_structure(nf, ns, nc, n_modes=5, max_v=20):
     denomenator = np.power(nf, 2)-np.power(ns,2)
     a = (np.power(ns,2)-np.power(nc,2))/denomenator
 
     fig, ax = plt.subplots()
     for i in range(n_modes):
-        start_v = i*np.pi+np.arctan(a)
-        V = np.linspace(start_v, 20, 100)
+        start_v = i*np.pi+np.arctan(np.sqrt(a))
+        V = np.linspace(start_v, max_v, 100)
         b = np.zeros(len(V))
         for j in range(len(V)):
-            b[j] = root_scalar(normalized_relation, x0=0, args=(V[j], a, i)).root
+            b[j] = root_scalar(normalized_relation, bracket=[0,1-1e-6], args=(V[j], a, i)).root
         ax.plot(V, b, label='v={}'.format(i))
     ax.legend()
     return ax
@@ -44,6 +48,6 @@ if __name__ == '__main__':
     nc = 1.40
     h = 5
     wavelength = 1
-    ax = mode_structure(nf, ns, nc, mode='wavelength')
+    ax = mode_structure(nf, ns, nc)
     plt.show()
     plt.savefig('tmp.png')
