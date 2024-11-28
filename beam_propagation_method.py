@@ -22,38 +22,58 @@ def complex_profile(complex_array):
     return ax
 
 
-def BPM(z, h, x0, k, n,size=100):
+def gauss_source(x0, h, size=100):
     """
+    Generate a beam of gauss profile
+
 
     Parameters:
     ----------
-    z: float. propagation distance
+    x0: float. characteristic length
+    h:  float domain width
+    size: int. sampled points
+
+    Returns:
+    -------
+    E: array. intensity at points
+    """
+    x = np.linspace(-h/2, h/2, size)
+    E = np.exp(-(x/x0)**2)
+    return E
+
+
+def propagate(dz, h, k0, n, E, size=100):
+    """
+    propagate a beam in the medium. With two phase correction terms
+
+    Parameters:
+    ----------
+    dz: float. propagation distance
     h: float. domain width
-    x0: characteristic length of the beam
-    k: wave vector
-    n: refractive index
-    size: int. sampled points size
+    x0: float.  characteristic length of the beam
+    k0: float. wavenumber in vaccum
+    n: array of length 2.  Refractive index at the boundary of the interval. 
+        Set n[0]=n[1] to get homogeneous medium. Or get linear profile.
+    size: int. sampled points size. Must be even
 
     Returns:
     -------
     newE: array of sampled points size reconstructed at length z.
     """
-    dx = h/size
-    x = np.arange(-h/2, h/2, dx)
-    E = np.exp(-x**2/x0)
-    Ef = np.fft.fft(E)
-    Ef = chop(Ef)
+    # fft components
+    n_ave = np.mean(n)
+    n = np.linspace(n[0],n[1],size)
 
-    wavelength = 2*np.pi/(k*n)
-    s = np.arange(len(x)/2)
-    s = np.concatenate((s, s[::-1]+1))
-    s = s**2
-    phase_shift = k*n * z * (1 + 0.5*(wavelength/h)**2* s)
+    a = h/2/np.pi
+    kx = np.concatenate((np.arange(size/2), np.arange(-size/2,0)))/a
 
-    newEf = Ef*np.exp(1j*phase_shift)
-    newEf = np.abs(Ef) * np.exp(1j * (np.angle(Ef)+phase_shift))
-    newE = np.fft.ifft(newEf)
-    newE = chop(newE)
+    real_beta = n_ave**2*k0**2 - kx**2
+    real_beta[real_beta<0] = 0
+    phase1 = np.exp(1j*kx**2/(n_ave*k0 +np.sqrt(real_beta))*dz)
+    phase2 = np.exp(-1j*(n-n_ave)*k0*dz)
+
+    newE = np.fft.fft(E)*phase1
+    newE = np.fft.ifft(newE)*phase2
 
     return newE
 
@@ -61,12 +81,14 @@ def BPM(z, h, x0, k, n,size=100):
 if __name__ == '__main__':
     fig, ax = plt.subplots()
 
-    for i in range(5):
-        z = 200 + i*100
-        newE = BPM(z, 120, 8, 2*np.pi/0.8, 1)
-        ax.scatter(np.arange(len(newE)), np.abs(newE), label='z={}um'.format(z), s=1)
+    E = gauss_source(x0=3, h=200, size=512)
+    for i in range(10):
+        z = (i+1)*10
+        newE = propagate(dz=z, h=200, k0=2*np.pi/1, n=[1.5,1.5], size=512, E=E)
+        ax.plot(np.arange(len(newE)), np.abs(newE), label='z={}um'.format(z), linewidth=1)
 
     ax.legend()
     plt.show()
+    print(E.max())
 
 
