@@ -41,25 +41,27 @@ def solve_eigen(k0, h, nf, ns, nc):
 
 def get_patterns(out, mode_n, h, bottom_cladding_width, top_cladding_width, dx=0.1):
     top = top_cladding_width+h/2
+    bottom = -bottom_cladding_width-h/2
     wg_top = h/2
     wg_bottom = -h/2
-    bottom = -bottom_cladding_width-h/2
-    x1 = np.arange(wg_top, top, dx)
-    x2 = np.arange(wg_bottom, wg_top, dx)
-    x3 = np.arange(bottom, wg_bottom, dx)
+
+    x = np.arange(bottom, top, dx)
+    x1 = x[x<wg_bottom]
+    x2 = x[(x>=wg_bottom) & (x<=wg_top)]
+    x3 = x[x>wg_top]
 
     y = out['ys'][mode_n]
     kf = out['kf'][mode_n]
-    E1 = np.exp(-y*(x1-h/2))
-    if mode_n%2==0:
-        E2 = np.cos(kf*x2)/np.cos(kf*h/2)
-        E3 = np.exp(y*(x3+h/2))
-    else:
-        E2 = np.sin(kf*x2)/np.sin(kf*h/2)
-        E3 = -np.exp(y*(x3+h/2))
 
-    E = np.concatenate((E3, E2, E1))
-    x = np.concatenate((x3, x2, x1))
+    if mode_n%2==0:
+        E1 = np.exp(y*(x1+h/2))
+        E2 = np.cos(kf*x2)/np.cos(kf*h/2)
+    else:
+        E1 = -np.exp(y*(x1+h/2))
+        E2 = np.sin(kf*x2)/np.sin(kf*h/2)
+
+    E3 = np.exp(-y*(x3-h/2))
+    E = np.concatenate((E1, E2, E3))
 
     return x, E
 
@@ -102,8 +104,10 @@ def solution_patterns(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.4
     out = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
     mode_n = len(out['b'])
 
-    size = int((bottom_width+top_width+h)/dx)
-    Es = np.zeros((mode_n, size))
+    top = top_width+h/2
+    bottom = -bottom_width-h/2
+    x = np.arange(bottom, top, dx)
+    Es = np.zeros((mode_n, len(x)))
 
     w = 2*np.pi/wavelength * 3e8
     mu = 1.257e-6
@@ -111,7 +115,6 @@ def solution_patterns(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.4
         x, E = get_patterns(out, i, h, bottom_cladding_width=bottom_width, top_cladding_width=top_width, dx=dx)
         I = simpson(E, x=x)
         E = normalized_distribution(x, E, w, mu, out['beta'][i])
-
         Es[i] = E
 
     if show==True:

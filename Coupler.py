@@ -25,7 +25,7 @@ for i in range(iterations):
 
 fig, ax = plt.subplots()
 for i in range(iterations):
-    if i%10 == 0:
+    if i%int(iterations/3) == 0:
         ax.plot(x, np.abs(propagated_E[i]), c='k')
     else:
         continue

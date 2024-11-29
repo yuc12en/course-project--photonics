@@ -1,4 +1,5 @@
 from eigen_value import *
+from Coupler_parameters import *
 
 nf = 1.5
 ns = 1.45
@@ -7,7 +8,10 @@ h = 5
 wavelength = 1
 
 # basic solution
-# sol = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
+# for i in range(iterations):
+#     h = h0 - i*h0/iterations
+#     sol = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
+#     print(sol['ys'])
 
 # show the normalized picture and the solution
 # ax = solution_structure(nf, ns, nc, k0=np.pi*2/wavelength, h=h)
@@ -18,5 +22,11 @@ wavelength = 1
 # plt.show()
 
 # draw the solution patterns
-# x, Es, out = solution_patterns(wavelength, h, 3, 3, nf, ns, 0.1, show=True)
-# plt.show()
+fig , ax = plt.subplots()
+for i in range(iterations):
+    h = h0 - i*h0/iterations
+    x, Es, out = solution_patterns(wavelength, h, 3, 3, nf, ns, 0.1, show=False)
+    if i%10 == 0:
+        ax.plot(x, Es[0], label='iterations: {}'.format(i))
+ax.legend()
+plt.show()
