@@ -48,7 +48,7 @@ for i in range(n_it):
     print(overlap(E, E, x[1]-x[0]))
 
     source = np.exp(-x**2/25)
-    t[i] = out['neff'][0]*k0 / (k0*3e8 * 1.257e-6) * overlap(E, source, x[1]-x[0])
+    t[i] = out['neff'][0]*k0 / (2*w*mu) * overlap(E, source, x[1]-x[0])
 
 plt.plot(range(len(t)), t)
 plt.show()
