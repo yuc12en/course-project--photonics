@@ -7,13 +7,13 @@ def normalized_relation(b, V, a, m):
     right = m*np.pi + np.arctan(np.sqrt(b/(1-b))) + np.arctan(np.sqrt((b+a)/(1-b)))
     return left-right
 
-def normalized_parameter(k0, h, nf, ns, nc):
+def nomalized_eigen_parameters(k0, h, nf, ns, nc):
     denomenator = np.power(nf, 2)-np.power(ns,2)
     V = k0*h*np.sqrt(denomenator)
     a = (np.power(ns,2)-np.power(nc,2))/denomenator
     return V, a
 
-def solve_eigen(k0, h, nf, ns, nc, return_type='b'):
+def solve_eigen(k0, h, nf, ns, nc):
 
     denomenator = np.power(nf, 2)-np.power(ns,2)
     V = k0*h*np.sqrt(denomenator)
@@ -24,20 +24,31 @@ def solve_eigen(k0, h, nf, ns, nc, return_type='b'):
     for i in range(n_allowed_modes):
         b[i] = root_scalar(normalized_relation, bracket=[0,1-1e-6], args=(V, a, i)).root
 
-    if return_type=='b':
-        return b
-    else:
-        neff = b*denomenator + ns**2
-        neff = np.sqrt(neff)
-        if return_type=='coeff':
-            kf = k0 * np.sqrt(nf**2-neff**2)
-            gamma_s = k0 * np.sqrt(neff**2-ns**2)
-            gamma_c = k0 * np.sqrt(neff**2-nc**2)
-            return kf, gamma_s, gamma_c
-        elif return_type == 'neff':
-            return neff
-        else:
-            raise ValueError("Wrong args return_type={}".format(return_type))
+    neff = b*denomenator + ns**2
+    neff = np.sqrt(neff)
+    kf = k0 * np.sqrt(nf**2-neff**2)
+    gamma_s = k0 * np.sqrt(neff**2-ns**2)
+    gamma_c = k0 * np.sqrt(neff**2-nc**2)
+    out = {'b':b}
+    out['neff'] = neff
+    out['kf'] = kf
+    out['gamma_s'] = gamma_s
+    out['gamma_c'] = gamma_c
+
+    return out
+
+def overlap(e1, e2, dx):
+    I = 0
+    for i in range(len(e1)):
+        I += dx*e1[i]*e2[i]
+    return I
+
+
+def normalized_distribution(E, w, mu, beta, dx):
+    I = overlap(E, E, dx)
+    E /= np.sqrt(I)
+    E *= np.sqrt(2*w*mu/beta)
+    return E
 
 def symmetric_profile(kf, gamma, n_mode, h, bottom_cladding_width, top_cladding_width, dx):
     top = top_cladding_width+h/2
@@ -57,7 +68,9 @@ def symmetric_profile(kf, gamma, n_mode, h, bottom_cladding_width, top_cladding_
         E3 = -np.exp(gamma*(x3+h/2))
 
     E = np.concatenate((E3, E2, E1))
-    return E
+    x = np.concatenate((x3, x2, x1))
+
+    return x, E
 
 
 def mode_structure(nf, ns, nc, n_modes=5, max_V=20):
@@ -77,15 +90,17 @@ def mode_structure(nf, ns, nc, n_modes=5, max_V=20):
     return ax
 
 
-def mode_solution(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.45, dx=0.1, show=False):
-    kf, ys, yc = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns, return_type='coeff')
+def mode_solution(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.45, dx=0.1,show=False):
+    out = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
+    kf = out['kf']
+    ys = out['gamma_s']
 
     x = np.arange(-bottom_width-h/2, top_width+h/2, dx)
     xs = np.zeros((len(kf), x.shape[0]))
     Es = np.zeros(xs.shape)
 
     for i in range(len(kf)):
-        E = symmetric_profile(kf[i], ys[i], i, h, bottom_cladding_width=top_width, top_cladding_width=bottom_width, dx=dx)
+        x, E = symmetric_profile(kf[i], ys[i], i, h, bottom_cladding_width=top_width, top_cladding_width=bottom_width, dx=dx)
         Es[i] = E
 
     if show==True:
@@ -104,7 +119,7 @@ if __name__ == '__main__':
     h = 5
     wavelength = 1
 
-    kf, ys, yc = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns, return_type='coeff')
+    out = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
 
     # draw solution
     # b = solve_eigen(2*np.pi/wavelength, h, nf, ns, nc)
@@ -122,31 +137,31 @@ if __name__ == '__main__':
     # plt.show()
 
     # draw modes and solution
-    # xs, Es = mode_solution(wavelength, h, 3, 3, 1.5, 1.45, 0.1, show=False)
+    # xs, Es = mode_solution(wavelength, h, 3, 3, 1.5, 1.45, 0.1, show=True)
 
 
-    ## Coupler
-    wavelength = 1.5
-    nf = 3.5
-    ns = 1.5
-    nc = ns
-    ## Geometry of waveguide
-    h0 = 3
-    top_width = 3
-    bottom_width = 3
-    iterations = 20  # where h=0
-    ## precision
-    dx = 0.1  # determines the sampled size along x-axis
-    dz = 10  # um. Stepping size
-    domain_width = 60  # domain width of BPM. Determing the spacial frequency range after fft range.
+    # ## Coupler
+    # wavelength = 1.5
+    # nf = 3.5
+    # ns = 1.5
+    # nc = ns
+    # ## Geometry of waveguide
+    # h0 = 3
+    # top_width = 3
+    # bottom_width = 3
+    # iterations = 20  # where h=0
+    # ## precision
+    # dx = 0.1  # determines the sampled size along x-axis
+    # dz = 10  # um. Stepping size
+    # domain_width = 60  # domain width of BPM. Determing the spacial frequency range after fft range.
 
-    i=0
-    h = 2
-    # xs, Es = mode_solution(wavelength, h, top_width, bottom_width, 3.5, 1.5, dx, show=True  )
+    # i=0
+    # h = 2
+    # # xs, Es = mode_solution(wavelength, h, top_width, bottom_width, 3.5, 1.5, dx, show=True  )
             
-    b = solve_eigen(2*np.pi/wavelength, h, nf, ns, nc)
-    V, a = normalized_parameter(2*np.pi/wavelength, h, nf, ns, nc)
-    ax = mode_structure(nf, ns, nc, n_modes=15, max_V=50)
-    ax.vlines(V, 0, 1, colors='k', linewidth=2, linestyles='-.')
-    ax.scatter(np.ones(len(b))*V, b, facecolor='none', edgecolors='k')
-    plt.show()
+    # b = solve_eigen(2*np.pi/wavelength, h, nf, ns, nc)
+    # V, a = normalized_parameter(2*np.pi/wavelength, h, nf, ns, nc)
+    # ax = mode_structure(nf, ns, nc, n_modes=15, max_V=50)
+    # ax.vlines(V, 0, 1, colors='k', linewidth=2, linestyles='-.')
+    # ax.scatter(np.ones(len(b))*V, b, facecolor='none', edgecolors='k')
+    # plt.show()

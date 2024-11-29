@@ -2,6 +2,12 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
+def overlap(e1, e2, dx):
+    I = 0
+    for i in range(len(e1)):
+        I += dx*e1[i]*e2[i]
+    return I
+
 
 def chop(complex_array, tol=1e-10):
     """
