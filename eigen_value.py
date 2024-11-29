@@ -108,7 +108,7 @@ def solution_patterns(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.4
     w = 2*np.pi/wavelength * 3e8
     mu = 1.257e-6
     for i in range(mode_n):
-        x, E = get_patterns(out, i, h, bottom_cladding_width=top_width, top_cladding_width=bottom_width, dx=dx)
+        x, E = get_patterns(out, i, h, bottom_cladding_width=bottom_width, top_cladding_width=top_width, dx=dx)
         I = simpson(E, x=x)
         E = normalized_distribution(x, E, w, mu, out['beta'][i])
 
@@ -124,11 +124,6 @@ def solution_patterns(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.4
 
 
 if __name__ == '__main__':
-    nf = 1.5
-    ns = 1.45
-    nc = 1.45
-    h = 5
-    wavelength = 1
 
     # basic solution
     # sol = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
@@ -145,3 +140,4 @@ if __name__ == '__main__':
     # ax = solution_patterns(wavelength, h, 3, 3, nf, ns, 0.1, show=True)
     # plt.show()
 
+    pass
