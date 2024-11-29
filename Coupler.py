@@ -12,10 +12,10 @@ ns = 1.5
 nc = 1.5
 
 # Geometry of waveguide
-h0 = 5  
+h0 = 10  
 top_width = 9
 bottom_width = 3
-iterations = 20  # where h=0
+iterations = 60  # where h=0
 
 # precision
 dx = 0.01  # determines the sampled size along x-axis
@@ -23,37 +23,35 @@ dz = 10  # um. Stepping size
 
 domain_width = 60  # domain width of BPM. Determing the spacial frequency range after fft range.
 
-
 # Examing the h_tip solution
-# kfs = np.zeros(iterations)
-# for i in range(iterations):
-#     h = h0 - h0/iterations*i
-#     out = solve_eigen(k0, h, nf, ns, nc)
-#     kfs[i] = out['kf'][0]
-# T = 2*np.pi/kfs
-# tip
-# h_tip = h0/iterations  
-
-# h_tip coupling
-h_tip = h0/iterations
-out = solve_eigen(k0, h_tip, nf, ns, nc)
-# V, a = normalized_parameter(k0, h_tip, nf, ns, nc)
+# print(out)
+# V, a =  nomalized_eigen_parameters(k0, h_tip, nf, ns, nc)
 # ax = mode_structure(nf, ns, nc, n_modes=5, max_V=20)
 # ax.vlines(V, 0, 1, colors='k', linewidth=2, linestyles='-.')
 # ax.scatter(np.ones(len(out['b']))*V, out['b'], facecolor='none', edgecolors='k')
+# plt.title('Solution')
 # plt.show()
+
+n_it = iterations
 mu = 1.257e-6
-
-x, E = symmetric_profile(out['kf'][0], out['gamma_s'][0], 0, h_tip, bottom_width, top_width, dx)
 w = k0*3e8
-E = normalized_distribution(E, w, mu, out['neff'][0]*k0, x[1]-x[0])
 
-print(2*k0*3e8*mu/out['neff'][0]/k0)
-print(overlap(E, E, x[1]-x[0]))
+t = np.zeros(n_it)
+for i in range(n_it):
+    iterations = i+1
+    h_tip = h0/iterations
+    out = solve_eigen(k0, h_tip, nf, ns, nc)
+    x, E = symmetric_profile(out['kf'][0], out['gamma_s'][0], 0, h_tip, bottom_width, top_width, dx)
+    E = normalized_distribution(E, w, mu, out['neff'][0]*k0, x[1]-x[0])
 
-source = np.exp(-x**2/25)
-t = out['neff'][0]*k0 / (k0*3e8 * 1.257e-6) * overlap(E, source, x[1]-x[0])
-print(t)
+    print(2*w*mu/out['neff'][0]/k0)
+    print(overlap(E, E, x[1]-x[0]))
+
+    source = np.exp(-x**2/25)
+    t[i] = out['neff'][0]*k0 / (k0*3e8 * 1.257e-6) * overlap(E, source, x[1]-x[0])
+
+plt.plot(range(len(t)), t)
+plt.show()
 
 plt.plot(x, E)
 plt.plot(x, source)
