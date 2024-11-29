@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import root_scalar
+from scipy.integrate import simpson
 
 def get_normalized_parameters(k0, h, nf, ns, nc):
     denomenator = np.power(nf, 2)-np.power(ns,2)
@@ -90,14 +91,9 @@ def solution_structure(nf, ns, nc, n_modes=5, max_V=20, k0=None, h=None):
 
     return ax
 
-def overlap(e1, e2, dx):
-    I = 0
-    for i in range(len(e1)):
-        I += dx*e1[i]*e2[i]
-    return I
-
-def normalized_distribution(E, w, mu, beta, dx):
-    I = overlap(E, E, dx)
+def normalized_distribution(x, E, w, mu, beta):
+    E_square = E*E
+    I = simpson(E_square, x=x)
     E /= np.sqrt(I)
     E *= np.sqrt(2*w*mu/beta)
     return E
@@ -109,8 +105,13 @@ def solution_patterns(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.4
     size = int((bottom_width+top_width+h)/dx)
     Es = np.zeros((mode_n, size))
 
+    w = 2*np.pi/wavelength * 3e8
+    mu = 1.257e-6
     for i in range(mode_n):
         x, E = get_patterns(out, i, h, bottom_cladding_width=top_width, top_cladding_width=bottom_width, dx=dx)
+        I = simpson(E, x=x)
+        E = normalized_distribution(x, E, w, mu, out['beta'][i])
+
         Es[i] = E
 
     if show==True:
@@ -119,7 +120,7 @@ def solution_patterns(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.4
             ax[i].plot(x, Es[i])
         plt.show()
 
-    return x, Es
+    return x, Es, out
 
 
 if __name__ == '__main__':
@@ -143,8 +144,4 @@ if __name__ == '__main__':
     # draw the solution patterns
     # ax = solution_patterns(wavelength, h, 3, 3, nf, ns, 0.1, show=True)
     # plt.show()
-
-
-
-
 

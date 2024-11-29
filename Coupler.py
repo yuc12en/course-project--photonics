@@ -41,11 +41,12 @@ for i in range(n_it):
     iterations = i+1
     h_tip = h0/iterations
     out = solve_eigen(k0, h_tip, nf, ns, nc)
+    print(out['gamma_s'])
     x, E = symmetric_profile(out['kf'][0], out['gamma_s'][0], 0, h_tip, bottom_width, top_width, dx)
     E = normalized_distribution(E, w, mu, out['neff'][0]*k0, x[1]-x[0])
 
-    print(2*w*mu/out['neff'][0]/k0)
-    print(overlap(E, E, x[1]-x[0]))
+    # print(2*w*mu/out['neff'][0]/k0)
+    # print(overlap(E, E, x[1]-x[0]))
 
     source = np.exp(-x**2/25)
     t[i] = out['neff'][0]*k0 / (2*w*mu) * overlap(E, source, x[1]-x[0])
