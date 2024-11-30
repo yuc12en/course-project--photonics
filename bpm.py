@@ -1,12 +1,10 @@
+from eigen_value import *
+from Coupler_parameters import *
+
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-
-def overlap(e1, e2, dx):
-    I = 0
-    for i in range(len(e1)):
-        I += dx*e1[i]*e2[i]
-    return I
 
 
 def chop(complex_array, tol=1e-10):
@@ -71,6 +69,46 @@ def propagate(x, E, n, k0, z0, dz):
 
     return E
 
+def get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope, n_interval, n_step, dx=0.1,nf=3.5, ns=1.5, show=False):
+    x, E, out = solution_patterns(wavelength, h0, top_width, bottom_width, nf, ns, dx=dx, show=False)
+    E = E[0]  # fundamental mode
+
+    w = k0*3e8
+    mu = 1.257e-6
+    beta = out['beta'][0]
+    E = normalized_distribution(x, E, w, mu, beta)
+
+    taper_length = h0*slope
+    z_interval = taper_length/n_interval
+    iterations = n_interval
+    dz = z_interval/n_step
+
+    bottom = -bottom_width - h0/2
+    wg_bottom = -h0/2
+    wg_top = h0/2
+    top = top_width + h0/2
+
+    if show==True:
+        fig, ax = plt.subplots()
+        ax.plot(x, E)
+    for i in range(iterations):
+        h = h0 - i*h0/iterations
+        wg_bottom = -h/2
+        wg_top = h/2
+        n = np.ones(len(x))*ns
+        n[(x>wg_bottom) & (x<wg_top)] = nf
+
+        E = propagate(x, E, n, k0, z_interval, dz)
+    # E.dtype='complex'
+        if show==True:
+            ax.plot(x, np.abs(E), color=plt.get_cmap('viridis')(1-i/iterations))
+
+    if show==True:
+        return x, E, ax
+
+    return x, E
+
+
 
 if __name__ == '__main__':
     # test for propagate
@@ -83,8 +121,11 @@ if __name__ == '__main__':
     # plt.plot(x, np.abs(E))
 
     # plt.show()
+
+    # test for get_inverse_taper_pattern
+    # slope = 8 
+    # x, E, ax = get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope=slope ,n_interval=8, n_step=5, dx=0.1, show=True)
+    # plt.show()
+
+    # x, E = get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope=slope ,n_interval=8, n_step=5, dx=0.1)
     pass
-
-
-
-
