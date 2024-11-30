@@ -1,4 +1,4 @@
-from beam_propagation_method import *
+from bpm import *
 from eigen_value import *
 from Coupler_parameters import *
 
@@ -6,30 +6,30 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-# Fundamental mode of waveguide
-x, Es, out = solution_patterns(wavelength, h0, top_width, bottom_width, nf, ns, dx, show=False)
-propagated_E = np.zeros((iterations+1, size), dtype='complex')
-propagated_E[0] = Es[0]  # fundamental mode
+slope = np.linspace(5,10, 20)
+ts = np.zeros(len(slope))
 
-# fig, ax = plt.subplots()
-# ax.plot(x, Es[0])
+for i in range(len(slope)):
+    x, E, out = get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope=slope[i] ,n_interval=int(h0*slope[i]*2), n_step=5, dx=0.1, show=False)
+
+    source = np.exp(-(x/5)**2)
+    source = normalized_distribution(x, source, w, mu, k0*nf)
+    I = simpson(source*np.conjugate(E), x=x)
+    ts[i] = out['beta'][0]/2/w/mu*I
+
+#     out['ax'].set_title('slope:{}'.format(slope[i]))
+#     out['ax'].plot(x, source, color='r')
 # plt.show()
 
-# steping in the coupler 
-# Notice: 
-# 1. the domain width changes with propagation. While it negelcts in the simulation
-for i in range(iterations):
-    h = h0 - i*h0/iterations
-    neff = solve_eigen(k0, h, nf, ns, nc)['neff'][0]
-    propagated_E[i+1] = propagate(dz=dz, h=domain_width, k0=k0, n=[neff, neff], size=size,E=propagated_E[i])
-
 fig, ax = plt.subplots()
-for i in range(iterations):
-    if i%int(iterations/3) == 0:
-        ax.plot(x, np.abs(propagated_E[i]), c='k')
-    else:
-        continue
-
-source = np.exp(-x**2/25)
-ax.plot(x, source, color='r')
+ax.plot(slope, np.abs(ts))
 plt.show()
+
+
+#     ax.plot(x, E, color=plt.get_cmap('viridis')(1-i/len(slope)))
+#     ax.plot(x, source, color='r')
+# plt.show()
+
+# fig, ax = plt.subplots()
+# ax.plot(slope, ts)
+# plt.show()

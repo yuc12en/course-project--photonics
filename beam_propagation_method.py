@@ -90,8 +90,7 @@ def get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope, n_interval
 
     if show==True:
         fig, ax = plt.subplots()
-        out['ax'] = ax
-        out['ax'].plot(x, E)
+        ax.plot(x, E)
     for i in range(iterations):
         h = h0 - i*h0/iterations
         wg_bottom = -h/2
@@ -102,9 +101,12 @@ def get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope, n_interval
         E = propagate(x, E, n, k0, z_interval, dz)
     # E.dtype='complex'
         if show==True:
-            out['ax'].plot(x, np.abs(E), color=plt.get_cmap('viridis')(1-i/iterations))
+            ax.plot(x, np.abs(E), color=plt.get_cmap('viridis')(1-i/iterations))
 
-    return x, E, out
+    if show==True:
+        return x, E, ax
+
+    return x, E
 
 
 
