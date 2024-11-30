@@ -28,73 +28,63 @@ def complex_profile(complex_array):
     return ax
 
 
-def gauss_source(x0, h, size=100):
-    """
-    Generate a beam of gauss profile
 
-
-    Parameters:
-    ----------
-    x0: float. characteristic length
-    h:  float domain width
-    size: int. sampled points
-
-    Returns:
-    -------
-    E: array. intensity at points
-    """
-    x = np.linspace(-h/2, h/2, size)
-    E = np.exp(-(x/x0)**2)
-    return E
-
-
-def propagate(dz, h, k0, n, E, size=100):
+def propagate(x, E, n, k0, z0, dz):
     """
     propagate a beam in the medium. With two phase correction terms
 
     Parameters:
     ----------
-    dz: float. propagation distance
-    h: float. domain width
-    x0: float.  characteristic length of the beam
+    x: array. x position of wave
+    E: array. Intensity at position x
+    n: int of array. refractive index profile
     k0: float. wavenumber in vaccum
-    n: array of length 2.  Refractive index at the boundary of the interval. 
-        Set n[0]=n[1] to get homogeneous medium. Or get linear profile.
-    size: int. sampled points size. Must be even
+    H: float. domain width
+    dz: float. stepping width in the BPM. NOT THE PROPAGATION WIDTH OR HOMOGENEOUS LENGTH
+    z0: float. propagation length
 
     Returns:
     -------
     newE: array of sampled points size reconstructed at length z.
     """
-    # fft components
+    size = len(x)
+    H = x[-1] - x[0]
+    
+    if isinstance(n, int):
+        n = np.ones(size)*n
     n_ave = np.mean(n)
-    n = np.linspace(n[0],n[1],size)
 
-    a = h/2/np.pi
+    a = H/2/np.pi
     kx = np.concatenate((np.arange(size/2), np.arange(-size/2,0)))/a
 
-    real_beta = n_ave**2*k0**2 - kx**2
-    real_beta[real_beta<0] = 0
-    phase1 = np.exp(1j*kx**2/(n_ave*k0 +np.sqrt(real_beta))*dz)
+    beta_square = n_ave**2*k0**2 - kx**2
+    beta_square[beta_square<0] = 0
+    phase1 = np.exp(1j*dz*kx**2/(n_ave*k0 +np.sqrt(beta_square)))
     phase2 = np.exp(-1j*(n-n_ave)*k0*dz)
 
-    newE = np.fft.fft(E)*phase1
-    newE = np.fft.ifft(newE)*phase2
+    E = np.fft.fftshift(E)
+    iterations = int(z0/dz)
+    for i in range(iterations):
+        E = np.fft.fft(E)*phase1
+        E = np.fft.ifft(E)*phase2
+    E = np.fft.fftshift(E)
 
-    return newE
+    return E
 
 
 if __name__ == '__main__':
-    fig, ax = plt.subplots()
+    # test for propagate
+    # size = 512
+    # cladwidth = 200
+    # x = np.linspace(-0.5, 0.5, size)*cladwidth
+    # E = np.exp(-(x/3)**2)
+    # plt.plot(x, np.abs(E))
+    # E = propagate(x, E, 1.5, 2*np.pi/1, 800, 4)
+    # plt.plot(x, np.abs(E))
 
-    E = gauss_source(x0=3, h=200, size=512)
-    for i in range(10):
-        z = (i+1)*10
-        newE = propagate(dz=z, h=200, k0=2*np.pi/1, n=[1.5,1.5], size=512, E=E)
-        ax.plot(np.arange(len(newE)), np.abs(newE), label='z={}um'.format(z), linewidth=1)
+    # plt.show()
+    pass
 
-    ax.legend()
-    plt.show()
-    print(E.max())
+
 
 
