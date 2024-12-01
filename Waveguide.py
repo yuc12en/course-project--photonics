@@ -1,30 +1,31 @@
 from eigen_value import *
-from Coupler_parameters import *
 
-h0 = 5
-slope = 0.1
+wavelength = 1.5
+k0 = 2*np.pi/wavelength
+nf = 3.5
+ns = 1.5
+nc = 1.5
 
-length = 1000
-# dz = 1  # z position precision
-z_interval = 10  # discrete precision
-# z = np.arange(0,length, dz)
+mu = 1.257e-6
+w = k0*3e8
 
-iterations = int(length/z_interval)
+h0 = 3
 
-z = np.linspace(0,1000, iterations)
-neffs = np.zeros(iterations)
+def get_dt(k0, h0, slope, z_interval):
+    length = 1000
+    iterations = int(length/z_interval)
+    z = np.linspace(0, 1000, iterations)
+    neffs = np.zeros(iterations)
+    for i in range(iterations):
+        h_left = h0 + z_interval*i*slope
+        h_right = h0 + z_interval*(i+1)*slope
+        h = (h_left+h_right)/2
+        out = solve_eigen(k0, h, nf, ns, ns)
+        neffs[i] = out['neff'][0]
+    
+    time_delay = simpson(neffs/3e8, x=z)
+    return time_delay
 
-for i in range(iterations):
-    h_left = h0 + z_interval*i*slope
-    h_right = h0 + z_interval*(i+1)*slope
-    h = (h_left+h_right)/2
-    out = solve_eigen(k0, h, nf, ns, ns)
-    neffs[i] = out['neff'][0]
-
-
-time_delay = simpson(neffs/3e8, x=z)
-print("Wavelength: {},\tTime delay:{}".format(wavelength,time_delay))
-
-# fig, ax = plt.subplots()
-# ax. plot(z, neffs)
-# plt.show()
+if __name__ == '__main__':
+    dt = get_dt(k0, h0, 0.1, 10)
+    print('time delay: {}'.format(dt))
