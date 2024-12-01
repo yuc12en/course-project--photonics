@@ -1,6 +1,4 @@
 from eigen_value import *
-from Coupler_parameters import *
-
 
 import numpy as np
 import pandas as pd
@@ -69,8 +67,15 @@ def propagate(x, E, n, k0, z0, dz):
 
     return E
 
-def get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope, n_interval, n_step, dx=0.1,nf=3.5, ns=1.5, show=False):
-    x, E, out = solution_patterns(wavelength, h0, top_width, bottom_width, nf, ns, dx=dx, show=False)
+def get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope, n_interval, n_step, dx=0.1,nf=3.5, ns=1.5, show='none'):
+    """
+
+
+    Parameters:
+    ----------
+    show: 'none', 'process', 'final'
+    """
+    x, E, out = solution_patterns(k0, h0, bottom_width, top_width, nf, ns, dx=dx, show=False)
     E = E[0]  # fundamental mode
 
     w = k0*3e8
@@ -88,7 +93,7 @@ def get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope, n_interval
     wg_top = h0/2
     top = top_width + h0/2
 
-    if show==True:
+    if show=='process':
         fig, ax = plt.subplots()
         out['ax'] = ax
         out['ax'].plot(x, E)
@@ -101,9 +106,15 @@ def get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope, n_interval
 
         E = propagate(x, E, n, k0, z_interval, dz)
     # E.dtype='complex'
-        if show==True:
+        if show=='process':
             out['ax'].plot(x, np.abs(E), color=plt.get_cmap('viridis')(1-i/iterations))
 
+    if show=='final':
+        fig, ax = plt.subplots()
+        out['ax'] = ax
+        ax.plot(x, np.abs(E))
+        ax.set_title('h0:{:.2f}\t$\lambda$:{:.2f}\tslope:{:.2f}'.format(h0, 2*np.pi/k0, slope))
+    
     return x, E, out
 
 

@@ -51,6 +51,8 @@ def get_patterns(out, mode_n, h, bottom_cladding_width, top_cladding_width, dx=0
     wg_bottom = -h/2
 
     x = np.arange(bottom, top, dx)
+    if len(x)%2 != 0:
+        x = x[:-1]
     x1 = x[x<wg_bottom]
     x2 = x[(x>=wg_bottom) & (x<=wg_top)]
     x3 = x[x>wg_top]
@@ -105,13 +107,16 @@ def normalized_distribution(x, E, w, mu, beta):
     E *= np.sqrt(2*w*mu/beta)
     return E
 
-def solution_patterns(wavelength, h, top_width=3, bottom_width=3, nf=1.5, ns=1.45, dx=0.1,show=False):
+def solution_patterns(k0, h, bottom_width=3, top_width=3, nf=1.5, ns=1.45, dx=0.1,show=False):
+    wavelength = 2*np.pi/k0
     out = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
     mode_n = len(out['b'])
 
     top = top_width+h/2
     bottom = -bottom_width-h/2
     x = np.arange(bottom, top, dx)
+    if len(x)%2 != 0:  # The x determines the spatial resolution. Which also adopted in the bpm method. Consider the conveinece of coding, x must be even
+        x = x[:-1]
     Es = np.zeros((mode_n, len(x)))
 
     w = 2*np.pi/wavelength * 3e8
