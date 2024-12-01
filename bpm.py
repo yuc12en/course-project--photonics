@@ -132,9 +132,23 @@ if __name__ == '__main__':
     # plt.show()
 
     # test for get_inverse_taper_pattern
-    # slope = 8 
-    # x, E, ax = get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope=slope ,n_interval=8, n_step=5, dx=0.1, show=True)
-    # plt.show()
+    wavelength = 1.5
+    k0 = 2*np.pi/wavelength
+    nf = 3.5
+    ns = 1.5
+    nc = 1.5
 
-    # x, E = get_inverse_taper_pattern(k0, h0, bottom_width, top_width, slope=slope ,n_interval=8, n_step=5, dx=0.1)
-    pass
+    mu = 1.257e-6
+    w = k0*3e8
+
+    slope = 3.8
+    h0 = np.linspace(1,6,4)
+    top_width = 20-h0/2
+    bottom_width = 3-h0/2
+    ts = np.zeros(len(h0))
+
+
+    for i in range(4):
+        x, E, out= get_inverse_taper_pattern(k0, h0[i], bottom_width[i], top_width[i], slope=slope ,n_interval=8, n_step=5, dx=0.1, show='process')
+    plt.show()
+    # pass
