@@ -99,7 +99,7 @@ def solution_structure(nf, ns, nc, n_modes=5, max_V=20, k0=None, h=None):
     return ax
 
 def normalized_distribution(x, E, w, mu, beta):
-    E_square = E*E
+    E_square = E*np.conjugate(E)
     I = simpson(E_square, x=x)
     E /= np.sqrt(I)
     E *= np.sqrt(2*w*mu/beta)
