@@ -19,11 +19,13 @@ def eigen_problem(b, V, a, m):
     right = m*np.pi + np.arctan(np.sqrt(b/(1-b))) + np.arctan(np.sqrt((b+a)/(1-b)))
     return left-right
 
+
+# 1
 def solve_eigen(k0, h, nf, ns, nc):
 
-    denomenator = np.power(nf, 2)-np.power(ns,2)
+    denomenator = nf**2-ns**2
     V = k0*h*np.sqrt(denomenator)
-    a = (np.power(ns,2)-np.power(nc,2))/denomenator
+    a = (ns**2-nc**2)/denomenator
 
     n_allowed_modes = int(np.ceil((V-np.arctan(np.sqrt(a)))/np.pi))
     b = np.zeros(n_allowed_modes)
@@ -44,35 +46,30 @@ def solve_eigen(k0, h, nf, ns, nc):
     out['yc'] = gamma_c
     return out
 
-def get_patterns(out, mode_n, h, bottom_cladding_width, top_cladding_width, dx=0.1):
-    top = top_cladding_width+h/2
-    bottom = -bottom_cladding_width-h/2
-    wg_top = h/2
-    wg_bottom = -h/2
-
-    x = np.arange(bottom, top, dx)
-    if len(x)%2 != 0:
-        x = x[:-1]
-    x1 = x[x<wg_bottom]
-    x2 = x[(x>=wg_bottom) & (x<=wg_top)]
-    x3 = x[x>wg_top]
-
-    y = out['ys'][mode_n]
-    kf = out['kf'][mode_n]
-
-    if mode_n%2==0:
-        E1 = np.exp(y*(x1+h/2))
-        E2 = np.cos(kf*x2)/np.cos(kf*h/2)
+def generate_mode_function(kf, ys, h, mode='even'):
+    if mode=='even' or mode%2==0:
+        def E_n(x):
+            x1 = x[x<-h/2]
+            x2 = x[(x>=-h/2) & (x<=h/2)]
+            x3 = x[x>h/2]
+            E1 = np.exp(ys*(x1+h/2))
+            E2 = np.cos(kf*x2)/np.cos(kf*h/2)
+            E3 = np.exp(-ys*(x3-h/2))
+            return np.concatenate((E1,E2,E3))
     else:
-        E1 = -np.exp(y*(x1+h/2))
-        E2 = np.sin(kf*x2)/np.sin(kf*h/2)
+        def E_n(x):
+            x1 = x[x<-h/2]
+            x2 = x[(x>=-h/2) & (x<=h/2)]
+            x3 = x[x>h/2]
+            E1 = -np.exp(ys*(x1+h/2))
+            E2 = np.sin(kf*x2)/np.sin(kf*h/2)
+            E3 = np.exp(-ys*(x3-h/2))
+            return np.concatenate((E1,E2,E3))
 
-    E3 = np.exp(-y*(x3-h/2))
-    E = np.concatenate((E1, E2, E3))
+    return E_n
+# 4
 
-    return x, E
-
-
+# 2
 def solution_structure(nf, ns, nc, n_modes=5, max_V=20, k0=None, h=None):
     denomenator = np.power(nf, 2)-np.power(ns,2)
     a = (np.power(ns,2)-np.power(nc,2))/denomenator
@@ -100,29 +97,31 @@ def solution_structure(nf, ns, nc, n_modes=5, max_V=20, k0=None, h=None):
 
     return ax
 
-def normalized_distribution(x, E, w, mu, beta):
+def normalized_distribution(x, E, w, mu, beta, return_type='none'):
     E_square = E*np.conjugate(E)
     I = simpson(E_square, x=x)
     E /= np.sqrt(I)
     E *= np.sqrt(2*w*mu/beta)
-    return E
+    if return_type == 'coeff':
+        return E, np.sqrt(I)/np.sqrt(2*w*mu/beta)
+    else:
+        return E
 
-def solution_patterns(k0, h, bottom_width=3, top_width=3, nf=1.5, ns=1.45, dx=0.1,show=False):
-    wavelength = 2*np.pi/k0
-    out = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
+# 3
+def solution_patterns(k0, h, bottom_width=3, top_width=3, nf=3.5, ns=1.5, dx=0.1,show=False):
+    out = solve_eigen(k0, h, nf, ns, ns)
     mode_n = len(out['b'])
 
     top = top_width+h/2
     bottom = -bottom_width-h/2
     x = np.arange(bottom, top, dx)
-    if len(x)%2 != 0:  # The x determines the spatial resolution. Which also adopted in the bpm method. Consider the conveinece of coding, x must be even
-        x = x[:-1]
-    Es = np.zeros((mode_n, len(x)))
+    Es = np.ones((mode_n, len(x)))
 
-    w = 2*np.pi/wavelength * 3e8
+    w = k0 * 3e8 * 1e-6
     mu = 1.257e-6
     for i in range(mode_n):
-        x, E = get_patterns(out, i, h, bottom_cladding_width=bottom_width, top_cladding_width=top_width, dx=dx)
+        E_fun = generate_mode_function(out['kf'][i], out['ys'][i], h, i)
+        E = E_fun(x)
         I = simpson(E, x=x)
         E = normalized_distribution(x, E, w, mu, out['beta'][i])
         Es[i] = E
@@ -137,20 +136,28 @@ def solution_patterns(k0, h, bottom_width=3, top_width=3, nf=1.5, ns=1.45, dx=0.
 
 
 if __name__ == '__main__':
+    wavelength = 1.5
+    k0 = 2*np.pi/wavelength
+    nf = 3.5
+    ns = 1.5
+    nc = 1.5
+
+    mu = 1.257e-6
+    w = k0*3e8 * 1e-6
 
     # basic solution
     # sol = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
 
     # show the normalized picture and the solution
-    # ax = solution_structure(nf, ns, nc, k0=np.pi*2/wavelength, h=h)
-    # plt.show()
+    ax = solution_structure(nf, ns, nc, k0=np.pi*2/wavelength, h=1.2)
+    plt.show()
 
     # only show normalized picture
     # ax = solution_structure(nf, ns, nc)  # n_modes, max_V to adjust the lines and x-axis
     # plt.show()
 
     # draw the solution patterns
-    # ax = solution_patterns(wavelength, h, 3, 3, nf, ns, 0.1, show=True)
+    # ax = solution_patterns(wavelength, 2.5, 3, 3, nf, ns, 0.1, show=True)
     # plt.show()
 
     pass

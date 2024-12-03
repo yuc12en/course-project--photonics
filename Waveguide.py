@@ -16,49 +16,6 @@ def get_dt(k0, h0, slope, z_interval):
     time_delay = simpson(neffs/3e8, x=z)
     return time_delay
 
-def intermode_coupling(x, A, B, h0, slope, z_interval):
-
-    length = 1000
-    iterations = int(length/z_interval)
-
-    for i in range(iterations):
-        An, C_A = normalized_distribution(x, A, w, mu, beta_A, return_type='coeff')
-        Bn, C_B = normalized_distribution(x, B, w, mu, beta_B, return_type='coeff')
-        if i==0:
-            C_B = 0
-            B = Bn*C_B
-
-        h_left = h0 + z_interval*i*slope
-        h_right = h0 + z_interval*(i+1)*slope
-
-        indx1 = (x>h_left/2) & (x<h_right)
-        indx2 = (x<-h_left/2) & (x>-h_right)
-
-        if sum(indx1) <3:
-            return x, A, B
-
-        x_top = x[indx1]
-        x_bottom = x[indx2]
-        E1_top = An[indx1]
-        E1_bottom = An[indx2]
-        E2_top = Bn[indx1]
-        E2_bottom = Bn[indx2]
-
-        kappa = epsilon*w/4* (ns**2-nf**2) *(simpson(E1_top*E2_top, x=x_top) + simpson(E1_bottom*E2_bottom, x=x_bottom))
-
-        delta_A = 1j*kappa*B*np.exp(-1j*(beta_A-beta_B)*z_interval/2)*z_interval
-        delta_B = 1j*np.conjugate(kappa)*A*np.exp(1j*(beta_A-beta_B)*z_interval/2)*z_interval
-        # print(delta_A)
-        # print(delta_B)
-        # print('\n\n')
-        # if i==3:
-        #     break
-
-        A = C_A*An + delta_A
-        B = C_B*Bn + delta_B
-
-        
-    return x, A, B
 
 if __name__ == '__main__':
     # dt = get_dt(k0, h0, 0.1, 10)
@@ -78,18 +35,27 @@ if __name__ == '__main__':
     nc = 1.5
 
     mu = 1.257e-6
-    w = k0*3e8
+    w = k0*3e8 * 1e-6
     epsilon=8.85e-12 * 1e6 #F/m * 1e6 um
 
-    h0 = 3
-    bottom_width = 9
-    top_width = 9
-
+    h0 = 0.2
+    bottom_width = 20-h0/2
+    top_width = 20-h0/2
     
+    length = 1000
     z_interval = 10
     slope = 0.002
     dx = z_interval*slope
-    x, E, out = solution_patterns(k0, h0, bottom_width, top_width, nf, ns, dx)
+
+    h_criticle = np.pi*2/np.sqrt(nf**2-ns**2)/k0 + z_interval
+    coupling_length = length - (h_criticle-h0)/2/slope  # has to be positive = The end of the waveguide has at least 3 mode. Or there is no intermode coupling
+    print(coupling_length)
+    # solution_structure(nf, ns, nc)
+    # plt.vlines(2*np.pi, 0, 1)
+    # plt.show()
+    
+
+    x, E, out = solution_patterns(k0, h_criticle, 20-2/h_criticle, 20-2/h_criticle, nf, ns, dx)
 
     A_mode = 0
     B_mode = 2
@@ -106,7 +72,7 @@ if __name__ == '__main__':
     beta_B = out['beta'][B_mode]
 
 
-    x, A, B = intermode_coupling(x, A, B, h0=h0, slope=slope, z_interval=z_interval)
+    x, A, B = intermode_coupling(x, A, B, h0=h_criticle, length=coupling_length, slope=slope, z_interval=z_interval)
 
     An, C_A = normalized_distribution(x, A, w, mu, beta_A, return_type='coeff')
     Bn, C_B = normalized_distribution(x, B, w, mu, beta_B, return_type='coeff')
