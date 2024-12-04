@@ -117,8 +117,9 @@ def solution_patterns(k0, h, bottom_width=3, top_width=3, nf=3.5, ns=1.5, dx=0.1
     x = np.arange(bottom, top, dx)
     Es = np.ones((mode_n, len(x)))
 
-    w = k0 * 3e8 * 1e-6
-    mu = 1.257e-6
+    mu = 1.257e-6 *1e-6  #H/m * m/um = H/um
+    w = k0*3e8 *1e6 # um-1 * m/s * um/m = /s  # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    epsilon=8.85e-12 *1e-6 #F/m * m/um  = F/um
     for i in range(mode_n):
         E_fun = generate_mode_function(out['kf'][i], out['ys'][i], h, i)
         E = E_fun(x)
@@ -142,8 +143,9 @@ if __name__ == '__main__':
     ns = 1.5
     nc = 1.5
 
-    mu = 1.257e-6
-    w = k0*3e8 * 1e-6
+    mu = 1.257e-6 *1e-6  #H/m * m/um = H/um
+    w = k0*3e8 *1e6 # um-1 * m/s * um/m = /s  # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    epsilon=8.85e-12 *1e-6 #F/m * m/um  = F/um
 
     # basic solution
     # sol = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)

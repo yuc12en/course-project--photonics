@@ -4,8 +4,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 def intermode_coupling(k0, h0, length, slope1, z_turn, slope2, z_interval, dx):
-    mu = 1.257e-12
-    w = k0*3e8 * 1e-6   # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    mu = 1.257e-6 *1e-6  #H/m * m/um = H/um
+    w = k0*3e8 *1e6 # um-1 * m/s * um/m = /s  # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    epsilon=8.85e-12 *1e-6 #F/m * m/um  = F/um
 
     iterations = int(length/z_interval)
 
@@ -15,6 +16,8 @@ def intermode_coupling(k0, h0, length, slope1, z_turn, slope2, z_interval, dx):
 
     Change_CA = []
     Change_CB = []
+    Kappas = []
+    Ints = []
     for i in range(iterations):
         if z_interval*i <= z_turn:
             h_low = h0 + z_interval*i*slope1
@@ -28,24 +31,25 @@ def intermode_coupling(k0, h0, length, slope1, z_turn, slope2, z_interval, dx):
             n1 = nf
             n2 = ns
 
-        out = solve_eigen(k0, (h_high+h_low)/2, nf, ns, nc)
-        h = (h_high+h_low)/2
+        h_tmp = (h_high+h_low)/2
+        out = solve_eigen(k0, h_tmp, nf, ns, ns)
 
         if len(out['b']) <3:
             continue
         else:
             if flag == False:
                 x = np.arange(-20,20,dx)
-                A = generate_mode_function(out['kf'][0],out['ys'][0], h, mode=0)(x)
-                B = generate_mode_function(out['kf'][2],out['ys'][2], h, mode=2)(x)
+                A = generate_mode_function(out['kf'][0],out['ys'][0], h_tmp, mode=0)(x)
+                B = generate_mode_function(out['kf'][2],out['ys'][2], h_tmp, mode=2)(x)
                 beta_A = out['beta'][0]
                 beta_B = out['beta'][2]
-                flag = True
 
                 An, C_A = normalized_distribution(x, A, w, mu, beta_A, return_type='coeff')
+                # print(C_A)
                 Bn, C_B = normalized_distribution(x, B, w, mu, beta_B, return_type='coeff')
                 C_B = 0
                 B = Bn*C_B
+                flag = True
 
         if (z_interval*slope1/2 <= dx*3) or (z_interval*slope2/2 <= dx*3):  # At three x points in the calculation
             raise ValueError("Too sparse x. Increase slope, z_interval or reduce dx")
@@ -56,20 +60,22 @@ def intermode_coupling(k0, h0, length, slope1, z_turn, slope2, z_interval, dx):
         E1_step = An[indx]
         E2_step = Bn[indx]
 
-        kappa = epsilon*w/4* (n1**2-n2**2) *(simpson(E1_step*E2_step, x=x_step))*2
 
-        delta_A = 1j*kappa*C_B*Bn*np.exp(-1j*(beta_A-beta_B)*z_interval/2)*z_interval
+        kappa = epsilon*w/4* (n2**2-n1**2) *(simpson(E1_step*np.conjugate(E2_step), x=x_step))*2
+        Ints.append(simpson(E1_step*np.conjugate(E2_step), x=x_step))
+        delta_A = 1j* kappa*C_B*Bn*np.exp(-1j*(beta_A-beta_B)*z_interval/2)*z_interval
         delta_B = 1j* np.conjugate(kappa)*C_A*An *np.exp(1j*(beta_A-beta_B)*z_interval/2)*z_interval
-        print(np.abs(delta_B).max())
 
-        # loopnum = 30
+        # loopnum = 15
         # if i<loopnum:
-        #     print(kappa)
-            # print(C_A)
-            # print(C_B)
-            # print('\n')
+        #     fig, ax = plt.subplots()
+        #     ax.plot(x, An, 'k-')
+        #     ax.plot(x, Bn, 'k--')
+        #     ax.text(10, 1e-5, "{}".format(Ints[-1]))
+        #     plt.show()
         # if i==loopnum:
         #     break
+
         A = C_A*An + delta_A
         B = C_B*Bn + delta_B
 
@@ -77,13 +83,16 @@ def intermode_coupling(k0, h0, length, slope1, z_turn, slope2, z_interval, dx):
         Bn, C_B = normalized_distribution(x, B, w, mu, beta_B, return_type='coeff')
         Change_CA.append(np.abs(C_A))
         Change_CB.append(np.abs(C_B))
+        Kappas.append(kappa)
 
-    return ([[An, C_A], [Bn, C_B]], Change_CA, Change_CB)
+    return ([[An, C_A], [Bn, C_B]], Change_CA, Change_CB, Kappas, Ints)
 
 
 def source_coupling(k0, h0, length, slope, z_interval, dx):
-    mu = 1.257e-12
-    w = k0*3e8 * 1e-6   # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    mu = 1.257e-6 *1e-6  #H/m * m/um = H/um
+    w = k0*3e8 *1e6 # um-1 * m/s * um/m = /s  # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    epsilon=8.85e-12 *1e-6 #F/m * m/um  = F/um
+
     ns = 1.5
     nf = 3.5
 
@@ -141,8 +150,10 @@ def source_coupling(k0, h0, length, slope, z_interval, dx):
 
 
 def source_coupling_2(k0, length, slope, z_interval ,dx):
-    mu = 1.257e-12
-    w = k0*3e8 * 1e-6   # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    mu = 1.257e-6 *1e-6  #H/m * m/um = H/um
+    w = k0*3e8 *1e6 # um-1 * m/s * um/m = /s  # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    epsilon=8.85e-12 *1e-6 #F/m * m/um  = F/um
+
     ns = 1.5
     nf = 3.5
 
@@ -206,9 +217,9 @@ if __name__ == '__main__':
     ns = 1.5
     nc = 1.5
 
-    mu = 1.257e-6
-    w = k0*3e8
-    epsilon=8.85e-12 * 1e6 #F/m * 1e6 um
+    mu = 1.257e-6 *1e-6  #H/m * m/um = H/um
+    w = k0*3e8 *1e6 # um-1 * m/s * um/m = /s  # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
+    epsilon=8.85e-12 *1e-6 #F/m * m/um  = F/um
 
     h0 = 0.2
     bottom_width = 20-h0/2
@@ -221,16 +232,20 @@ if __name__ == '__main__':
     z_interval = 10
     dx = z_interval*np.min([slope1, slope2])/2/4
 
-    AB, As, Bs = intermode_coupling(k0, h0, 1000, slope1, 500, slope2, z_interval, dx)
+    AB, As, Bs, kappas, Ints = intermode_coupling(k0, h0, 1000, slope1, 500, slope2, z_interval, dx)
     # Change of the amplititude of higher mode B
-    fig, ax = plt.subplots()
-    ax.plot(range(len(Bs)), np.abs(Bs), 'k--', label='B')
-    ax.set_ylabel('B')
-    ax2 = ax.twinx()
+    fig, ax = plt.subplots(2)
+    ax[0].plot(range(len(Bs)), np.abs(Bs), 'k--', label='B')
+    ax[0].set_ylabel('B')
+    ax2 = ax[0].twinx()
     ax2.plot(range(len(As)), np.abs(As), 'k-', label='A')
     ax2.set_ylabel('A')
 
-    plt.legend()
+    ax[1].plot(range(len(kappas)), np.abs(kappas))
+    ax2 = ax[1].twinx()
+    ax2.scatter(range(len(Ints)), np.abs(Ints))
+
+    # plt.legend()
     plt.show()
 
 ######################################################################################

@@ -72,6 +72,10 @@ if __name__ == '__main__':
     beta_B = out['beta'][B_mode]
 
 
+    source_kf = np.pi/10
+    source_neff = np.sqrt((source_kf/k0)**2 + ns**2)
+    source_ys = k0*np.sqrt(source_neff**2-ns**2)
+
     x, A, B = intermode_coupling(x, A, B, h0=h_criticle, length=coupling_length, slope=slope, z_interval=z_interval)
 
     An, C_A = normalized_distribution(x, A, w, mu, beta_A, return_type='coeff')
