@@ -93,7 +93,7 @@ def solution_structure(nf, ns, nc, n_modes=5, max_V=20, k0=None, h=None):
             b[j] = root_scalar(eigen_problem, bracket=[0,1-1e-10], args=(V[j], a, i)).root
         ax.plot(V, b, label='v={}'.format(i))
     ax.legend()
-    ax.set_ylim([0,1])
+    # ax.set_ylim([0,1])
 
     return ax
 
