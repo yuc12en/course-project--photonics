@@ -111,5 +111,3 @@ plt.show()
 # ax.set_ylabel('length(um)')
 # fig.colorbar(im)
 # plt.show()
-
-

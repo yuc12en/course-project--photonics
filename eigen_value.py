@@ -8,6 +8,7 @@ def overlap(e1, e2, dx):
     for i in range(len(e1)):
         I += dx*e1[i]*e2[i]
     return I
+
 def get_normalized_parameters(k0, h, nf, ns, nc):
     denomenator = np.power(nf, 2)-np.power(ns,2)
     V = k0*h*np.sqrt(denomenator)
