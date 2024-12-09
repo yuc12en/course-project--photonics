@@ -169,6 +169,8 @@ def source_coupling_end(k0, h0, slope, z_interval ,dx):
 
     z = np.arange(0, length+z_interval, z_interval)
     h = h0-z*slope
+    z = z[h>0]
+    h = h[h>0]
     # print(h)
     # print(h+h_tip)
 
@@ -184,6 +186,7 @@ def source_coupling_end(k0, h0, slope, z_interval ,dx):
         out = solve_eigen(k0, h_new, nf, ns, ns)
 
         B_new = generate_mode_function(out['kf'][0], out['ys'][0], h_new)(x)
+
         beta_t = out['beta'][0]
         Bn_new, C_B = normalized_distribution(x, B_new, w, mu, beta_t, return_type='coeff')
 
@@ -214,9 +217,9 @@ if __name__ == '__main__':
     w = k0*3e8 *1e6 # um-1 * m/s * um/m = /s  # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
     epsilon=8.85e-12 *1e-6 #F/m * m/um  = F/um
 
-    h0 = 0.2
-    bottom_width = 20-h0/2
-    top_width = 20-h0/2
+    # h0 = 0.2
+    # bottom_width = 20-h0/2
+    # top_width = 20-h0/2
 
     # inter-mode coupling(waveguide)
 
@@ -257,6 +260,7 @@ if __name__ == '__main__':
     # start_time = time.time()
 
     # source-mode courpling(coupler)
+    # k0 = 2*np.pi/1.5
     # h0 = 0.2
     # slope = 0.3
     # length = h0/slope
@@ -288,39 +292,72 @@ if __name__ == '__main__':
     
     ########################3
     # output
-    h0 = 0.2
-    slope = 3.2 
-    slope = 1/3.2
-    length = h0/slope
-    z_interval = 0.01
-    dx = z_interval*slope/2/4
+    # h0 = 0.2
+    # slope = 3.2 
+    # slope = 0.8
+    # length = h0/slope
+    # z_interval = 0.05
+    # dx = z_interval*slope/2/4
     
-    # test_slope = np.arange(0.1,0.40,0.1)
+    # test_slope = np.arange(0.1,0.60,0.1)
     # ts = np.zeros(len(test_slope))
     # for i in range(len(test_slope)):
     #     dx = z_interval*test_slope[i]/2/4
-    #     ts[i] = source_coupling_end(2*np.pi/1.5, 0.2,test_slope[i], z_interval, dx)
-    
+    #     ts[i] = source_coupling_end(2*np.pi/1.5, 0.2, test_slope[i], z_interval, dx)
     # plt.plot(test_slope, ts)
+    # plt.show()
+    # t2 = source_coupling_end(2*np.pi/1.5, 0.2, slope, z_interval, dx)
+    # print(t2)
+
+    # k0 = 2*np.pi/1.5
+    # ratio = np.arange(10,60,10)
+    # h = np.arange(0.1,0.3,0.05)
+    # ts = np.zeros((len(ratio),len(h)))
+    # for i in range(len(ratio)):
+    #     for j in range(len(h)):
+    #         slope = 1/ratio[i]
+    #         try:
+    #             ts[i,j] = source_coupling_end(k0, h[j], slope, z_interval, z_interval*slope/2/4)
+    #         except IndexError:
+    #             ts[i,j] = 0
+    #             continue
+
+    # fig, ax = plt.subplots()
+    # im = ax.imshow(ts)
+    # ax.set_xticks(range(len(ratio)), labels=np.round(ratio, 1))
+    # ax.set_yticks(range(len(h)), labels=np.round(h, 2))
+    # ax.set_xlabel('length/thickness')
+    # ax.set_ylabel('length(um)')
+    # fig.colorbar(im)
     # plt.show()
     ########################################3
     # plot for transmission
-    import time
-    start = time.time()
-    wavelength_range = np.arange(1.3, 1.7+0.1,0.1)
-    t_total = np.zeros(len(wavelength_range))
-    for i in range(len(wavelength_range)):
-        k0 = np.pi*2/wavelength_range[i]
-        t1 = source_coupling_2(k0, length, slope, z_interval, dx)
-        t2 = source_coupling_end(k0, 0.2, 0.1, z_interval, z_interval*0.1/2/4)
-        t_total[i] = t1*t2
-    end = time.time()
-    print("Time cost: {}".format(end-start))
-    plt.plot(wavelength_range, t_total)
-    plt.show()
-    
-    # plot for time delay
+    # import time
+    # start = time.time()
+    # wavelength_range = np.arange(1.3, 1.7+0.1,0.1)
+    # t_total = np.zeros(len(wavelength_range))
 
+    # h0 = 0.2
+    # slope = 0.3
+    # length = h0/slope
+    # z_interval = 0.01
+    # dx = z_interval*slope/2/4
+
+    # for i in range(len(wavelength_range)):
+    #     k0 = np.pi*2/wavelength_range[i]
+    #     t1 = source_coupling_2(k0, length, slope, z_interval, dx)
+    #     t2 = source_coupling_end(k0, 0.2, 0.8, 0.05, z_interval*slope/2/4)
+    #     print(wavelength_range[i], t1, t2)
+    #     t_total[i] = t1*t2
+    # end = time.time()
+    # print("Time cost: {}".format(end-start))
+    # fig, ax = plt.subplots()
+    
+    # ax.plot(wavelength_range, t_total)
+    # ax.set_xticks(wavelength_range)
+    # ax.set_xticklabels((wavelength_range*1000).astype('int'))
+    # plt.show()
+    
 
 
 

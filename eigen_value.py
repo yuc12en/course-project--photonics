@@ -31,7 +31,7 @@ def solve_eigen(k0, h, nf, ns, nc):
     n_allowed_modes = int(np.ceil((V-np.arctan(np.sqrt(a)))/np.pi))
     b = np.zeros(n_allowed_modes)
     for i in range(n_allowed_modes):
-        b[i] = root_scalar(eigen_problem, bracket=[0,1-1e-6], args=(V, a, i)).root
+        b[i] = root_scalar(eigen_problem, bracket=[0,1-1e-14], args=(V, a, i)).root
 
     neff = b*denomenator + ns**2
     neff = np.sqrt(neff)
