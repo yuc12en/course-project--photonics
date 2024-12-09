@@ -57,7 +57,7 @@ wavelength = np.arange(1.300, 1.700, 0.10)
 # dispersion
 # slope1 = np.arange(0.001, 0.006, 0.001)
 # z_turn_frac = np.arange(0.2, 0.8, 0.05)
-# wavelength = np.arange(1.300, 1.700, 0.10)
+# wavelength = np.araage(1.300, 1.700, 0.10)
 
 # k0s = np.pi*2/wavelength
 # ts = np.zeros((len(slope1), len(z_turn_frac)))
@@ -82,6 +82,7 @@ wavelength = np.arange(1.300, 1.700, 0.10)
 
 #################################################################################
 # wavelength range determination
+# start = time.time()
 # h0 = 0.2
 # slope1 = 0.007
 # z_turn_frac = 0.7
@@ -94,25 +95,52 @@ wavelength = np.arange(1.300, 1.700, 0.10)
 # dx = z_interval*np.min([slope1, slope2])/2/4
 # z, neffs, ts = get_dt(1.5, h0, length, slope1, z_turn, slope2, z_interval)
 
-# wavelength_range = np.arange(0.2,0.5,0.05)
+# wavelength_range = np.arange(0. ,0.21,0.01)
 # delta_t = np.zeros(len(wavelength_range))
 # for i in range(len(wavelength_range)):
+#     if wavelength_range[i] == 0:
+#         delta_t[i] = 0
+#         continue
 #     # wavelength = np.arange(1.3,1.7,0.1)
-#     wavelength = np.arange(1.5-wavelength_range[i],1.5+wavelength_range[i],0.1)
+#     wavelength = np.arange(1.5-wavelength_range[i],1.5+wavelength_range[i], 0.01)
 #     k0s = np.pi*2/wavelength
 
 #     t_tmp = get_dispersion(k0s, h0, length, slope1, z_turn, slope2, z_interval)
 #     delta_t[i] = np.ptp(t_tmp)
 
+# end = time.time()
+
+# print("Time: {}".format(end-start))
 # delta_t /= ts
 
 # fig, ax = plt.subplots()
 # print(wavelength_range)
 # ax.plot(wavelength_range, delta_t)
 # ax.set_xticks(wavelength_range)
-# ax.set_xticklabels(np.ceil(wavelength_range*1000).astype('int'))
+# ax.set_xticklabels(np.floor(wavelength_range*1000).astype('int'))
 # plt.show()
 
+##################################################################################
+# plot for dt
+# start = time.time()
+# h0 = 0.2
+# slope1 = 0.007
+# z_turn_frac = 0.7
+# length = 1000
+
+# z_turn = length*z_turn_frac
+# slope2 = slope1 * z_turn_frac/(1-z_turn_frac)
+# z_interval = 10
+
+# wavelengths = np.arange(1.3,1.8,0.1)
+# k0s = 2*np.pi/wavelengths
+# t_tmp = get_dispersion(k0s, h0, length, slope1, z_turn, slope2, z_interval)
+
+# fig, ax = plt.subplots()
+# ax.plot(wavelengths, t_tmp)
+# ax.set_xticks(wavelengths)
+# ax.set_xticklabels((wavelengths*1000).astype('int'))
+# plt.show()
 
     
 ##################################################################################

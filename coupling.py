@@ -125,10 +125,11 @@ def source_coupling_2(k0, length, slope, z_interval ,dx):
     out = solve_eigen(k0, h_tip, nf, ns, ns)
     x = np.arange(-20,20,dx)
 
+    fit_k = 2*np.pi/1.5
     source_kf = 13.244
-    source_neff = np.sqrt(nf**2- (source_kf/k0)**2)
-    source_ys = k0*np.sqrt(source_neff**2-ns**2)
-    source_beta = k0*source_neff
+    source_neff = np.sqrt(nf**2- (source_kf/fit_k)**2)
+    source_ys = fit_k*np.sqrt(source_neff**2-ns**2)
+    source_beta = fit_k*source_neff
 
     A = generate_mode_function(source_kf, source_ys, 0.02)(x)
     An, C_A = normalized_distribution(x, A, w, mu, source_beta, return_type='coeff')
@@ -158,7 +159,7 @@ def source_coupling_2(k0, length, slope, z_interval ,dx):
     return t
 
 
-def source_coupling_end(h0, k0, slope, z_interval ,dx):
+def source_coupling_end(k0, h0, slope, z_interval ,dx):
     w = k0*3e8 *1e6 # um-1 * m/s * um/m = /s  # units of mu and w will cancle out. mu: F/m.  w: um-1 * m/s * 10e-6 um/m
 
     if z_interval*slope/2 <= dx*3:
@@ -252,9 +253,8 @@ if __name__ == '__main__':
 ######################################################################################
     # source mode coupling
 
-
-    import time
-    start_time = time.time()
+    # import time
+    # start_time = time.time()
 
     # source-mode courpling(coupler)
     # h0 = 0.2
@@ -288,13 +288,42 @@ if __name__ == '__main__':
     
     ########################3
     # output
-    # h0 = 0.2
-    # slope = 0.3
-    # length = h0/slope
-    # z_interval = 0.01
-    # dx = z_interval*slope/2/4
-    # t = source_coupling_end(0.2, 1.5, slope, z_interval, dx)
-    # print(t)
+    h0 = 0.2
+    slope = 3.2 
+    slope = 1/3.2
+    length = h0/slope
+    z_interval = 0.01
+    dx = z_interval*slope/2/4
+    
+    # test_slope = np.arange(0.1,0.40,0.1)
+    # ts = np.zeros(len(test_slope))
+    # for i in range(len(test_slope)):
+    #     dx = z_interval*test_slope[i]/2/4
+    #     ts[i] = source_coupling_end(2*np.pi/1.5, 0.2,test_slope[i], z_interval, dx)
+    
+    # plt.plot(test_slope, ts)
+    # plt.show()
+    ########################################3
+    # plot for transmission
+    import time
+    start = time.time()
+    wavelength_range = np.arange(1.3, 1.7+0.1,0.1)
+    t_total = np.zeros(len(wavelength_range))
+    for i in range(len(wavelength_range)):
+        k0 = np.pi*2/wavelength_range[i]
+        t1 = source_coupling_2(k0, length, slope, z_interval, dx)
+        t2 = source_coupling_end(k0, 0.2, 0.1, z_interval, z_interval*0.1/2/4)
+        t_total[i] = t1*t2
+    end = time.time()
+    print("Time cost: {}".format(end-start))
+    plt.plot(wavelength_range, t_total)
+    plt.show()
+    
+    # plot for time delay
+
+
+
+
 
 
 
