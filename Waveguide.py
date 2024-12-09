@@ -19,42 +19,44 @@ bottom_width = 20-h0/2
 top_width = 20-h0/2
 length = 1000
 slope1 = np.arange(0.001, 0.010, 0.001)
-z_turn_frac = np.arange(0.2, 0.8, 0.1)
+z_turn_frac = np.arange(0.2, 0.8, 0.05)
 wavelength = np.arange(1.300, 1.700, 0.10)
 
 # inter-mode coupling(waveguide)
 #####################################################################################
-z_interval = 10
+# z_interval = 10
 
-ts = np.zeros((len(slope1), len(z_turn_frac)))
-for i in range(len(slope1)):
-    for j in range(len(z_turn_frac)):
-        z_turn = length*z_turn_frac[j]
-        slope2 = slope1[i] * z_turn_frac[j]/(1-z_turn_frac[j])
-        dx = z_interval*np.min([slope1[i], slope2])/2/4
-        AB, As, Bs, kappas, Ints = intermode_coupling(k0, h0, length, slope1[i], z_turn, slope2, z_interval, dx)
-        ts[i,j] = Bs[-1]/As[-1]
+# ts = np.zeros((len(slope1), len(z_turn_frac)))
+# for i in range(len(slope1)):
+#     for j in range(len(z_turn_frac)):
+#         z_turn = length*z_turn_frac[j]
+#         slope2 = slope1[i] * z_turn_frac[j]/(1-z_turn_frac[j])
+#         dx = z_interval*np.min([slope1[i], slope2])/2/4
+#         AB, As, Bs, kappas, Ints = intermode_coupling(k0, h0, length, slope1[i], z_turn, slope2, z_interval, dx)
+#         ts[i,j] = Bs[-1]/As[-1]
 
-end = time.time()
+# end = time.time()
 
 
-end = time.time()
-print("Total Iterations: {}".format(len(slope1)*len(z_turn_frac)))
-print("Total time cost: {}".format(end-start))
+# end = time.time()
+# print("Total Iterations: {}".format(len(slope1)*len(z_turn_frac)))
+# print("Total time cost: {}".format(end-start))
 
-fig, ax = plt.subplots()
-im = ax.imshow(ts)
-ax.set_xticks(range(len(z_turn_frac)), labels=np.round(z_turn_frac,1))
-ax.set_yticks(range(len(slope1)), labels=np.round(slope1,3))
-ax.set_xlabel('z_turn_frac')
-ax.set_ylabel('slope')
-fig.colorbar(im)
-plt.show()
+# print(ts)
+
+# fig, ax = plt.subplots()
+# im = ax.imshow(ts)
+# ax.set_xticks(range(len(z_turn_frac)), labels=np.round(z_turn_frac,2))
+# ax.set_yticks(range(len(slope1)), labels=np.round(slope1,3))
+# ax.set_xlabel('z_turn_frac')
+# ax.set_ylabel('slope')
+# fig.colorbar(im)
+# plt.show()
 
 #############################################################
 # dispersion
 # slope1 = np.arange(0.001, 0.006, 0.001)
-# z_turn_frac = np.arange(0.2, 0.8, 0.2)
+# z_turn_frac = np.arange(0.2, 0.8, 0.05)
 # wavelength = np.arange(1.300, 1.700, 0.10)
 
 # k0s = np.pi*2/wavelength
@@ -77,6 +79,41 @@ plt.show()
 # ax.set_ylabel('slope')
 # fig.colorbar(im)
 # plt.show()
+
+#################################################################################
+# wavelength range determination
+# h0 = 0.2
+# slope1 = 0.007
+# z_turn_frac = 0.7
+# length = 1000
+
+# z_turn = length*z_turn_frac
+# slope2 = slope1 * z_turn_frac/(1-z_turn_frac)
+# z_interval = 10
+
+# dx = z_interval*np.min([slope1, slope2])/2/4
+# z, neffs, ts = get_dt(1.5, h0, length, slope1, z_turn, slope2, z_interval)
+
+# wavelength_range = np.arange(0.2,0.5,0.05)
+# delta_t = np.zeros(len(wavelength_range))
+# for i in range(len(wavelength_range)):
+#     # wavelength = np.arange(1.3,1.7,0.1)
+#     wavelength = np.arange(1.5-wavelength_range[i],1.5+wavelength_range[i],0.1)
+#     k0s = np.pi*2/wavelength
+
+#     t_tmp = get_dispersion(k0s, h0, length, slope1, z_turn, slope2, z_interval)
+#     delta_t[i] = np.ptp(t_tmp)
+
+# delta_t /= ts
+
+# fig, ax = plt.subplots()
+# print(wavelength_range)
+# ax.plot(wavelength_range, delta_t)
+# ax.set_xticks(wavelength_range)
+# ax.set_xticklabels(np.ceil(wavelength_range*1000).astype('int'))
+# plt.show()
+
+
     
 ##################################################################################
 # Examine the effect of z_tunr_frac

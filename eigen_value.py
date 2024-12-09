@@ -79,6 +79,7 @@ def solution_structure(nf, ns, nc, n_modes=5, max_V=20, k0=None, h=None):
 
     if k0!= None and h!=None:
         out = solve_eigen(k0, h, nf, ns, nc)
+        print(out)
         b = out['b']
         V = k0*h*np.sqrt(denomenator)
         ax.vlines(V, 0, 1, colors='k', linewidth=2, linestyles='--')
@@ -152,8 +153,9 @@ if __name__ == '__main__':
     # sol = solve_eigen(2*np.pi/wavelength, h, nf, ns, ns)
 
     # show the normalized picture and the solution
-    ax = solution_structure(nf, ns, nc, k0=np.pi*2/wavelength, h=1.2)
+    ax = solution_structure(nf, ns, nc, k0=np.pi*2/wavelength, h=0.2)
     plt.show()
+
 
     # only show normalized picture
     # ax = solution_structure(nf, ns, nc)  # n_modes, max_V to adjust the lines and x-axis

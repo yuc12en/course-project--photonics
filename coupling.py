@@ -150,7 +150,6 @@ def source_coupling_2(k0, length, slope, z_interval ,dx):
         Bn_new, C_B = normalized_distribution(x, B_new, w, mu, beta_t, return_type='coeff')
 
         tmp = beta_t/w/mu/2*np.trapezoid(Bn_new*Bn, x=x)
-        print(tmp)
         if tmp>= 1:
             tmp=1
         t *= tmp
@@ -258,8 +257,9 @@ if __name__ == '__main__':
     start_time = time.time()
 
     # source-mode courpling(coupler)
-    # length = 0.4
-    # slope = 0.5
+    # h0 = 0.2
+    # slope = 0.3
+    # length = h0/slope
     # z_interval = 0.01
     # dx = z_interval*slope/2/4
     # t = source_coupling_2(k0, length, slope, z_interval, dx)
@@ -288,11 +288,13 @@ if __name__ == '__main__':
     
     ########################3
     # output
-    slope = 0.5
-    z_interval = 0.01
-    dx = z_interval*slope/2/4
-    t = source_coupling_end(0.2, 1.5, slope, z_interval, dx)
-    print(t)
+    # h0 = 0.2
+    # slope = 0.3
+    # length = h0/slope
+    # z_interval = 0.01
+    # dx = z_interval*slope/2/4
+    # t = source_coupling_end(0.2, 1.5, slope, z_interval, dx)
+    # print(t)
 
 
 
